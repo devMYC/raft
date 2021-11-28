@@ -7,8 +7,8 @@ import (
 )
 
 const (
-    port = ":9090"
-    sh = "/bin/sh"
+	port = ":9090"
+	sh   = "/bin/sh"
 )
 
 func blockTraffic(w http.ResponseWriter, req *http.Request) {

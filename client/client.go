@@ -11,9 +11,9 @@ import (
 )
 
 func main() {
-    addr := flag.String("server", "localhost:8080", "server IP:PORT")
-    cmd := flag.String("command", "nop", "Command to be executed by raft cluster")
-    flag.Parse()
+	addr := flag.String("server", "localhost:8080", "server IP:PORT")
+	cmd := flag.String("command", "nop", "Command to be executed by raft cluster")
+	flag.Parse()
 
 	conn, err := grpc.Dial(*addr, grpc.WithInsecure())
 	if err != nil {
@@ -26,11 +26,11 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-    resp, err := c.ClientRequest(ctx, &pb.ClientRequestArgs{Cmd: *cmd})
+	resp, err := c.ClientRequest(ctx, &pb.ClientRequestArgs{Cmd: *cmd})
 	if err != nil {
 		log.Fatalf("failed to send request: %v\n", err)
 	}
 
-    log.Printf("received: isLeader=%v", resp.GetIsLeader())
+	log.Printf("received: isLeader=%v", resp.GetIsLeader())
 }
 
