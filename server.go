@@ -103,9 +103,9 @@ func (s *Server) AppendEntries(ctx context.Context, in *pb.AppendEntriesArgs) (*
 
 	if leaderCommit > s.cm.state.commitIndex {
 		s.cm.state.commitIndex = Min(leaderCommit, len(s.cm.state.log)-1)
-		for i, entry := range s.cm.state.log[s.cm.state.lastApplied+1 : s.cm.state.commitIndex+1] {
+		for _, entry := range s.cm.state.log[s.cm.state.lastApplied+1 : s.cm.state.commitIndex+1] {
 			log.Printf("[AppendEntries] applying log entry=%+v to state machine\n", *entry)
-			s.cm.state.lastApplied = i
+			s.cm.state.lastApplied = int(entry.Idx)
 		}
 	}
 

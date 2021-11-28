@@ -134,9 +134,9 @@ func (cm *ConsensusModule) becomeLeader(peers map[int]pb.RpcClient) {
 					if 2*count > len(peers)+1 {
 						// Now it's safe to apply the command at log[N] to the state machine
 						log.Printf("[cm.becomeLeader] commitIndex advanced to N=%d from %d\n", N, cm.state.commitIndex)
-						for i, entry := range cm.state.log[cm.state.lastApplied+1 : N+1] {
+						for _, entry := range cm.state.log[cm.state.lastApplied+1 : N+1] {
 							log.Printf("[cm.becomeLeader] applying log entry=%+v to state machine\n", *entry)
-							cm.state.lastApplied = i
+							cm.state.lastApplied = int(entry.Idx)
 						}
 						cm.state.commitIndex = N
 						break
