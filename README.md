@@ -1,3 +1,8 @@
+This implementation is used to learn/understand the Raft consensus algorithm.
+The code implements the behaviors shown in Figure 2 of the
+[Raft paper](https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf)
+with no log persistence.
+
 The servers in the cluster communicate with each other via `grpc` calls.
 Make sure [protobuf compiler](https://grpc.io/docs/protoc-installation/) is installed.
 
@@ -22,7 +27,7 @@ $ protoc --go_out=. --go_opt=paths=source_relative \
     proto/raft.proto
 ```
 
-The `docker-compose.yml` file will create a RAFT cluster with 3 nodes.
+The `docker-compose.yml` file will create a Raft cluster with 3 nodes.
 
 ```
 $ docker-compose build
