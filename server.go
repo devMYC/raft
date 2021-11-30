@@ -158,17 +158,17 @@ func main() {
 		}
 		peerIdsNum = append(peerIdsNum, peerId)
 		peerAddr := "node" + s + port
-		go func(n int, addr string) {
+		go func() {
 			time.Sleep(3 * time.Second)
-			log.Printf("Peer Address: %s\n", addr)
-			conn, err := grpc.Dial(addr, grpc.WithInsecure())
+			log.Printf("Peer Address: %s\n", peerAddr)
+			conn, err := grpc.Dial(peerAddr, grpc.WithInsecure())
 			if err != nil {
 				log.Fatalf("Failed to dial peer '%s': %v\n", peerAddr, err)
 			}
 			for {
 				time.Sleep(time.Second)
 				if conn.GetState() == connectivity.Ready {
-					log.Printf("Connection to node %d %s\n", n, conn.GetState().String())
+					log.Printf("Connection to node %d %s\n", peerId, conn.GetState().String())
 					wg.Done()
 					break
 				}
@@ -176,7 +176,7 @@ func main() {
 			cm.mu.Lock()
 			defer cm.mu.Unlock()
 			peers[peerId] = pb.NewRpcClient(conn)
-		}(peerId, peerAddr)
+		}()
 	}
 
 	lis, err := net.Listen("tcp", port)
