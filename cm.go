@@ -10,14 +10,19 @@ import (
 	pb "github.com/devMYC/raft/proto"
 )
 
+// Role is the current role of the server.
 type Role int
 
+// Each server can act as exactly one of the following
+// roles under normal operation. Each server starts as
+// a Follower.
 const (
 	Follower Role = iota
 	Candidate
 	Leader
 )
 
+// State of Raft algorithm shown in Fig 2 of Raft paper.
 type State struct {
 	// persistent state on all servers
 	currentTerm int
@@ -33,6 +38,7 @@ type State struct {
 	matchIndex map[int]int
 }
 
+// InitState initializes Raft state for a server.
 func InitState(peerIds []int) *State {
 	initState := &State{
 		currentTerm: 0,
@@ -59,6 +65,8 @@ func (s *State) getLastLogEntry() (*pb.LogEntry, int) {
 	return s.log[i], i
 }
 
+// ConsensusModule encapsulates the state and
+// other information used to run Raft algorithm.
 type ConsensusModule struct {
 	// sm *StateMachine
 	id             int
@@ -68,6 +76,8 @@ type ConsensusModule struct {
 	state          *State
 }
 
+// NewConsensusModule creates a new consensus module with serverID
+// used as seed to prevent livelock of elections.
 func NewConsensusModule(id int, peerIds []int) *ConsensusModule {
 	rand.Seed(int64(id))
 	return &ConsensusModule{
@@ -102,15 +112,16 @@ func (cm *ConsensusModule) becomeLeader(peers map[int]pb.RpcClient) {
 	cm.latestUpdateAt = time.Now()
 	cm.role = Leader
 
-	for peerId := range peers {
-		cm.state.nextIndex[peerId] = len(cm.state.log)
-		cm.state.matchIndex[peerId] = -1
+	for peerID := range peers {
+		// Reinitialize `nextIndex`s and `matchIndex`s of peers.
+		cm.state.nextIndex[peerID] = len(cm.state.log)
+		cm.state.matchIndex[peerID] = -1
 	}
 
 	log.Printf("[cm.becomeLeader] state=%+v\n", cm.state)
 
 	go func() {
-		// send initial empty AEs to other servers to prevent new elections
+		// Send initial empty AEs to other servers to prevent new elections
 		cm.sendAE(true, peers)
 
 		for {
@@ -151,6 +162,7 @@ func (cm *ConsensusModule) becomeLeader(peers map[int]pb.RpcClient) {
 }
 
 func (cm *ConsensusModule) prepareElection(termBefore int, peers map[int]pb.RpcClient) {
+	// Election timeout 150~300ms as suggested in the Raft paper.
 	ms := time.Duration(150+rand.Intn(151)) * time.Millisecond
 	cm.mu.Lock()
 	cm.latestUpdateAt = time.Now()
@@ -223,6 +235,7 @@ func (cm *ConsensusModule) runElection(currTerm int, peers map[int]pb.RpcClient)
 		}(c)
 	}
 
+	// In case the votes are split and no new leader is elected.
 	go cm.prepareElection(currTerm, peers)
 }
 
@@ -231,7 +244,7 @@ func (cm *ConsensusModule) sendAE(init bool, peers map[int]pb.RpcClient) {
 	termBefore := cm.state.currentTerm
 	cm.mu.Unlock()
 
-	for peerId, c := range peers {
+	for peerID, c := range peers {
 		go func(id int, rpc pb.RpcClient) {
 			cm.mu.Lock()
 			_, lastLogIdx := cm.state.getLastLogEntry()
@@ -288,7 +301,7 @@ func (cm *ConsensusModule) sendAE(init bool, peers map[int]pb.RpcClient) {
 			if len(args.Entries) > 0 {
 				log.Printf("[cm.sendAE] state=%+v\n", cm.state)
 			}
-		}(peerId, c)
+		}(peerID, c)
 	}
 }
 
